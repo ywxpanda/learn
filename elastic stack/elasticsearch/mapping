@@ -1,0 +1,16 @@
+# 创建mapping
+PUT my_index
+{
+  "mappings": {
+    "doc": {
+      "properties": {
+        "age": {
+          "type": "long"
+        },
+        "username": {
+          "type": "text"
+        }
+      }
+    }
+  }
+}
