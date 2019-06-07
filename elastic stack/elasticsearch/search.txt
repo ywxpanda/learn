@@ -17,77 +17,77 @@ PUT test_search_index
 # 测试数据
 POST test_search_index/doc/_bulk
 {"index":{"_id":"1"}}
-{"username":"alfred way","job":"java engineer","age":18,"birth":"1990-01-02","isMarried":false}
+{"username":"panda way","job":"java engineer","age":18,"birth":"1990-01-02","isMarried":false}
 {"index":{"_id":"2"}}
-{"username":"alfred","job":"java senior engineer and java specialist","age":28,"birth":"1980-05-07","isMarried":true}
+{"username":"panda","job":"java senior engineer and java specialist","age":28,"birth":"1980-05-07","isMarried":true}
 {"index":{"_id":"3"}}
 {"username":"lee","job":"java and ruby engineer","age":22,"birth":"1985-08-07","isMarried":false}
 {"index":{"_id":"4"}}
-{"username":"alfred junior way","job":"ruby engineer","age":23,"birth":"1989-08-07","isMarried":false}
+{"username":"panda junior way","job":"ruby engineer","age":23,"birth":"1989-08-07","isMarried":false}
 
 GET test_search_index
 
 # search api
 
-# 查询字段中存在alfred的文档
-GET test_search_index/_search?q=alfred
+# 查询字段中存在panda的文档
+GET test_search_index/_search?q=panda
 
 
 # profile字段可以显示查询的详细情况
-GET test_search_index/_search?q=alfred
+GET test_search_index/_search?q=panda
 {
   "profile":true
 }
 
-# 查询username是alfred
-GET test_search_index/_search?q=username:alfred
+# 查询username是panda
+GET test_search_index/_search?q=username:panda
 {
   "profile": "true"
 }
 
-# terms 等效于 alfred or way
-GET test_search_index/_search?q=username:alfred way
+# terms 等效于 panda or way
+GET test_search_index/_search?q=username:panda way
 {
   "profile":true
 }
 # PhraseQuery
-GET test_search_index/_search?q=username:"alfred way"
+GET test_search_index/_search?q=username:"panda way"
 {
   "profile":true
 }
 
-GET test_search_index/_search?q=username:(alfred way)
+GET test_search_index/_search?q=username:(panda way)
 {
   "profile":true
 }
 
 
-GET test_search_index/_search?q=username:alfred AND way
+GET test_search_index/_search?q=username:panda AND way
 {
   "profile":true
 }
 
-GET test_search_index/_search?q=username:(alfred AND way)
+GET test_search_index/_search?q=username:(panda AND way)
 {
   "profile":true
 }
 
-GET test_search_index/_search?q=username:(alfred NOT way)
+GET test_search_index/_search?q=username:(panda NOT way)
 
 # url中+号要转义
-GET test_search_index/_search?q=username:(alfred +way)
+GET test_search_index/_search?q=username:(panda +way)
 {
   "profile":true
 }
 
-GET test_search_index/_search?q=username:(alfred %2Bway)
+GET test_search_index/_search?q=username:(panda %2Bway)
 {
   "profile":true
 }
 
-GET test_search_index/_search?q=username:alfred age:>26
+GET test_search_index/_search?q=username:panda age:>26
 
-GET test_search_index/_search?q=username:alfred AND age:>20
+GET test_search_index/_search?q=username:panda AND age:>20
 
 GET test_search_index/_search?q=birth:(>1980 AND <1990)
 
@@ -127,7 +127,7 @@ GET test_search_index/_search
   "explain":true,
   "query": {
     "match": {
-      "username": "alfred way"
+      "username": "panda way"
     }
   }
 }
@@ -139,7 +139,7 @@ GET test_search_index/_search
   "query": {
     "match": {
       "username": {
-        "query": "alfred way",
+        "query": "panda way",
         "operator": "and"
       }
     }
@@ -203,7 +203,7 @@ GET test_search_index/_search
   "query":{
     "query_string": {
       "default_field": "username",
-      "query": "alfred AND way"
+      "query": "panda AND way"
     }
   }
 }
@@ -217,7 +217,7 @@ GET test_search_index/_search
         "username",
         "job"
       ],
-      "query": "alfred OR (java AND ruby)"
+      "query": "panda OR (java AND ruby)"
     }
   }
 }
@@ -231,7 +231,7 @@ GET test_search_index/_search
   "profile":true,
   "query":{
     "simple_query_string": {
-     "query": "alfred +way \"java",
+     "query": "panda +way \"java",
      "fields": ["username"]
     }
   }
@@ -242,7 +242,7 @@ GET test_search_index/_search
   "query":{
     "query_string": {
       "default_field": "username",
-      "query": "alfred +way \"java"
+      "query": "panda +way \"java"
     }
   }
 }
@@ -251,7 +251,7 @@ GET test_search_index/_search
 {
   "query":{
     "simple_query_string": {
-     "query": "(job:alfred | username:alfred) (+(job:java | username:java) +(job:ruby | username:ruby)"
+     "query": "(job:panda | username:panda) (+(job:java | username:java) +(job:ruby | username:ruby)"
     }
   }
 }
@@ -262,7 +262,7 @@ GET test_search_index/_search
 {
   "query":{
     "term":{
-      "username":"alfred"
+      "username":"panda"
     }
   }
 }
@@ -271,7 +271,7 @@ GET test_search_index/_search
 {
   "query":{
     "term":{
-      "username":"alfred way"
+      "username":"panda way"
     }
   }
 }
@@ -281,7 +281,7 @@ GET test_search_index/_search
   "query": {
     "terms": {
       "username": [
-        "alfred",
+        "panda",
         "way"
       ]
     }
@@ -343,7 +343,7 @@ GET test_search_index/_search
     "constant_score": {
       "filter": {
         "match":{
-          "username":"alfred"
+          "username":"panda"
         }
       }
     }
@@ -408,7 +408,7 @@ GET test_search_index/_search
       "filter": [
         {
           "term": {
-            "username": "alfred"
+            "username": "panda"
           }
         }
       ]
@@ -423,7 +423,7 @@ GET test_search_index/_search
       "must": [
         {
           "match": {
-            "username": "alfred"
+            "username": "panda"
           }
         },
         {
@@ -504,7 +504,7 @@ GET test_search_index/_search
       "must": [
         {
           "term": {
-            "username": "alfred"
+            "username": "panda"
           }
         }
       ]
@@ -521,7 +521,7 @@ GET test_search_index/_search
       "must": [
         {
           "term": {
-            "username": "alfred"
+            "username": "panda"
           }
         }
       ],
@@ -543,7 +543,7 @@ GET test_search_index/_search
       "must": [
         {
           "match": {
-            "username": "alfred way"
+            "username": "panda way"
           }
         }
       ]
@@ -558,7 +558,7 @@ GET test_search_index/_search
       "must": [
         {
           "match": {
-            "username": "alfred way"
+            "username": "panda way"
           }
         }
       ],
@@ -578,7 +578,7 @@ GET test_search_index/_count
 {
   "query":{
     "match":{
-      "username": "alfred"
+      "username": "panda"
     }
   }
 }
