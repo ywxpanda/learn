@@ -1,0 +1,576 @@
+GET _cat/indices?format=json
+
+
+DELETE test
+
+GET test
+
+PUT test
+{
+  "mappings": {
+    "doc": {
+      "_source": {
+        "enabled": true
+      },
+      "properties": {
+        "gender": {
+          "type": "text"
+        },
+        "age": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "keyword"
+        },
+        "weight": {
+          "type": "float"
+        },
+        "address": {
+          "type": "text"
+        },
+        "birth": {
+          "type": "date"
+        }
+      }
+    }
+  },
+  "settings": {
+    "number_of_replicas": 1,
+    "number_of_shards": 2
+  }
+}
+
+# 获取age的最小值
+GET test/_search
+{
+  "aggs": {
+    "min_age": {
+      "min": {
+        "field": "age"
+      }
+    }
+  }
+}
+
+
+# sql distinct count
+GET test/_search
+{
+  "size": 0, 
+  "aggs": {
+    "distinct_count": {
+      "cardinality": {
+        "field": "name"
+      }
+    }
+  }
+}
+
+# 多值返回（max,min,avg,count,sum）
+GET test/_search
+{
+  "size": 0, 
+  "aggs": {
+    "stats_age": {
+      "stats": {
+        "field": "birth"
+      }
+    }
+  }
+}
+
+
+# 多值返回 包含了方差，标准差等
+GET test/_search
+{
+  "size": 0, 
+  "aggs": {
+    "min_age": {
+      "extended_stats": {
+        "field": "age"
+      }
+    }
+  }
+}
+
+# 统计体重的分布情况
+GET test/_search
+{
+  "size": 0, 
+  "aggs": {
+    "weight_per": {
+      "percentiles": {
+        "field": "weight"
+      }
+    }
+  }
+}
+# 制定返回的百分比的值
+GET test/_search
+{
+  "size": 0,
+  "aggs": {
+    "weight_per": {
+      "percentiles": {
+        "field": "weight",
+        "percents": [
+          25,
+          67
+        ]
+      }
+    }
+  }
+}
+
+
+# 查看年龄在整体中所处的位置
+GET test/_search
+{
+  "size": 0, 
+  "aggs": {
+    "age_per_rank": {
+      "percentile_ranks": {
+        "field": "age"
+        , "values": [
+          50,75
+          ]
+      }
+    }
+  }
+}
+
+
+
+
+# 按照terms进行分桶,terms查询text类型会进行分词，且需要吧fielddata打开
+GET test/_search
+{
+  "size": 0, 
+  "aggs": {
+    "names": {
+      "terms": {
+        "field": "address",
+        "size": 10,
+        "order": {
+          "_key": "asc"
+        }
+      }
+    }
+  }
+}
+# 设置fielddata
+PUT test/_mapping/doc
+{
+  "properties": {
+    "address":{
+      "type": "text",
+      "fielddata": true
+    }
+  }
+}
+
+# 按照range进行分桶
+GET test/_search
+{
+  "size": 0,
+  "aggs": {
+    "age_range": {
+      "range": {
+        "field": "age",
+        "ranges": [
+          {
+            "key": "<20",
+            "to": 20
+          },
+          {
+            "from": 20,
+            "to": 35
+          },{
+            "from": 50,
+            "to":67
+          }
+        ]
+      }
+    }
+  }
+}
+
+# range
+GET test/_search
+{
+  "size": 0,
+  "aggs": {
+    "date_range": {
+      "range": {
+        "field": "birth",
+        "format":"yyyy-MM",
+        "ranges": [
+          {
+            "from": "2019-03",
+            "to": "2019-04"
+          }
+        ]
+      }
+    }
+  }
+}
+
+# date range 可以使用相对的时间
+GET test/_search
+{
+  "size": 0,
+  "aggs": {
+    "dateRange": {
+      "date_range": {
+        "field": "birth",
+        "ranges": [
+          {
+            "from": "now-10d/d",
+            "to": "now"
+          }
+        ]
+      }
+    }
+  }
+}
+
+# 可以制定最大最小值  多的会补全，但是少的未生效？
+GET test/_search
+{
+  "size": 0,
+  "aggs": {
+    "age_list": {
+      "histogram": {
+        "field": "age",
+        "interval": 5,
+        "extended_bounds": {
+          "min": 32,
+          "max": 123
+        }
+      }
+    }
+  }
+}
+
+# dateHistogram 可以安装年月周日时分秒进行分割
+GET test/_search
+{
+  "size": 0,
+  "aggs": {
+    "dateHistogram_test": {
+      "date_histogram": {
+        "field": "birth",
+        "interval": "week"
+      }
+    }
+  }
+}
+
+
+# 子聚合分析
+GET test/_search
+{
+  "size": 0,
+  "aggs": {
+    "terms_aggs": {
+      "terms": {
+        "field": "name",
+        "size": 10
+      }
+      , "aggs": {
+        "age_histogram": {
+          "histogram": {
+            "field": "age",
+            "interval": 20
+          }
+        }
+      }
+    }
+  }
+}
+
+# 按照体重升序排序，取前十个，在按照年龄进行降序排列，每个桶中在取前十个
+GET test/_search
+{
+  "size": 0,
+  "aggs": {
+    "names": {
+      "terms": {
+        "field": "weight",
+        "size": 10
+        , "order": {
+          "_key": "asc"
+        }
+      },
+      "aggs":{
+        "top_by_age":{
+          "top_hits": {
+           "size":10,
+          "sort":{
+            "age":{
+              "order":"desc"
+            }
+          }
+          }
+        }
+      }
+    }
+  }
+}
+
+
+
+
+# pipline
+
+# Sibling
+# 和父查询同级
+# 按照姓名进行分桶，并计算每个姓名的岁数平均值，在基于之前的结果进行下一步的处理
+# min_bucket:分析的类型（最小）
+# bucket_path指定分析name_terms聚合分析下的子分析age_avg
+GET test/_search
+{
+  "size": 0,
+  "aggs": {
+    "name_terms": {
+      "terms": {
+        "field": "name",
+        "size": 10
+      },
+      "aggs": {
+        "age_avg": {
+          "avg": {
+            "field": "age"
+          }
+        }
+      }
+    },
+    "min_age_by_name":{
+      "min_bucket": {
+        "buckets_path": "name_terms>age_avg"
+      }
+    },
+    "max_age_by_name":{
+      "max_bucket": {
+        "buckets_path": "name_terms>age_avg"
+      }
+    },
+    "stats_age_by_name":{
+      "stats_bucket": {
+        "buckets_path": "name_terms>age_avg"
+      }
+    },
+    "per_age_by_name":{
+      "percentiles_bucket": {
+        "buckets_path": "name_terms>age_avg"
+      }
+    }
+  }
+}
+
+
+
+# parent
+# 和子查询同级
+# derivative:倒数
+# moving_avg：移动平均值，数值变化趋势
+# cumulative_sum累计求和
+GET test/_search
+{
+  "size": 0,
+  "query": {
+    "match": {
+      "address": "A"
+    }
+  }, 
+  "aggs": {
+    "birth_dateHistogram": {
+      "date_histogram": {
+        "field": "birth",
+        "interval": "month"
+      },
+      "aggs": {
+        "age_avg": {
+          "avg": {
+            "field": "age"
+          }
+        },
+        "derivative_age_avg": {
+          "derivative": {
+            "buckets_path": "age_avg"
+          }
+        },
+        "moving_age_avg":{
+          "moving_avg": {
+            "buckets_path": "age_avg"
+          }
+        },
+        "cumulative_sum_age_avg":{
+          "cumulative_sum": {
+            "buckets_path": "age_avg"
+          }
+        }
+      }
+    }
+  }
+}
+
+
+# filter
+
+GET test/_search
+{
+  "size": 0,
+  "aggs": {
+    "weigth_filter": {
+        "filter": {
+          "range": {
+            "weight": {
+              "gte": 60,
+              "lte": 80
+            }
+          }
+        },
+        "aggs": {
+          "name_terms": {
+            "terms": {
+              "field": "name",
+              "size": 10
+            }
+          }
+        }
+    },
+    "name_terms":{
+      "terms": {
+        "field": "name",
+        "size": 10
+      }
+    }
+  }
+}
+
+GET test
+
+PUT test/_mapping/doc
+{
+  "_source": {
+    "enabled":true
+  }
+}
+
+# post_filter:在聚合分析完成之后进行文档的过滤
+GET test/_search
+{
+  "aggs": {
+    "name_terms": {
+      "terms": {
+        "field": "name",
+        "size": 10
+      }
+    }
+  },
+  "post_filter": {
+    "match": {
+      "name":"y"
+    }
+  }
+}
+
+GET test/_search
+
+# global 无视query过滤条件直接进行所有文档的过滤
+# 适用于整体和局部的对比
+GET test/_search
+{
+  "query": {
+    "terms": {
+      "address": ["A","B"]
+    }
+  },
+  "aggs": {
+    "test": {
+      "avg": {
+        "field": "age"
+      }
+    },
+    "test2":{
+      "global": {}, 
+      "aggs": {
+        "weigth_avg": {
+          "avg": {
+            "field": "weight"
+          }
+        }
+      }
+    }
+  }
+}
+
+# 排序
+GET test/_search
+{
+  "size": 0,
+  "aggs": {
+    "test_name_order_by": {
+      "terms": {
+        "field": "name",
+        "size": 10,
+        "order": {
+          "_key": "desc",
+          "_count": "desc"
+        }
+      }
+    }
+  }
+}
+
+
+# 深层次的排序
+# 根据子查询的结果进行排序
+GET test/_search
+{
+  "size": 0,
+  "aggs": {
+    "name_terms": {
+      "terms": {
+        "field": "name",
+        "size": 10,
+        "order": {
+          "age_avg": "asc"
+        }
+      },
+      "aggs": {
+        "age_avg": {
+          "avg": {
+            "field": "age"
+          }
+        }
+      }
+    }
+  }
+}
+
+# 多值
+GET test/_search
+{
+  "size": 0,
+  "aggs": {
+    "name_terms": {
+      "terms": {
+        "field": "name",
+        "size": 10,
+        "order": {
+          "age_stats.sum": "asc"
+        }
+      },
+      "aggs": {
+        "age_stats": {
+          "stats": {
+            "field": "age"
+          } 
+        }
+      }
+    }
+  }
+}
+
